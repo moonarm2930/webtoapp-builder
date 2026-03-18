@@ -1,407 +1,738 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SYSTEM 22: Elite Protocol</title>
-    
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Tailwind Config for Custom Colors -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'void-black': '#050505',
-                        'cold-blue': '#0ea5e9',
-                        'ice-white': '#e2e8f0',
-                        'danger-red': '#ef4444',
-                        'system-gray': '#1e293b',
-                    },
-                    fontFamily: {
-                        mono: ['"Courier New"', 'Courier', 'monospace'],
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    }
-                }
-            }
-        }
-    </script>
-
+    <title>Arrow Game - Sticking Arrows</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #020617;
-            color: #e2e8f0;
-            font-family: 'Courier New', Courier, monospace;
+            background: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
         }
-        ::-webkit-scrollbar {
-            width: 8px;
+
+        .game-wrapper {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
         }
-        ::-webkit-scrollbar-track {
-            background: #0f172a; 
+
+        canvas {
+            display: block;
+            width: 1000px;
+            height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            cursor: crosshair;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8E8 30%, #B0E0E6 70%, #C0E8D5 100%);
         }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b; 
-            border-radius: 4px;
+
+        .instruction {
+            color: #ccc;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 16px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #334155; 
+
+        .instruction span {
+            display: inline-block;
+            background: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: #88ce02;
         }
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(30, 41, 59, 0.8);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+
+        .arrow-counter {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            color: white;
+            font-size: 18px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid #88ce02;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .glow-text {
-            text-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+
+        .replay-btn {
+            position: absolute;
+            bottom: 80px;
+            right: 40px;
+            background: linear-gradient(135deg, #88ce02, #6aa302);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(136, 206, 2, 0.4);
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .crt-line {
-            width: 100%;
-            height: 2px;
-            background: rgba(14, 165, 233, 0.1);
-            position: fixed;
-            animation: scanline 5s linear infinite;
-            pointer-events: none;
-            z-index: 50;
+
+        .replay-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #9ae010, #7cb806);
+            box-shadow: 0 6px 20px rgba(136, 206, 2, 0.6);
         }
-        @keyframes scanline {
-            0% { top: -10%; }
-            100% { top: 110%; }
+
+        .replay-btn:active {
+            transform: scale(0.95);
+        }
+
+        .replay-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .stats-container {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .stat-box {
+            background: rgba(0,0,0,0.7);
+            border-radius: 30px;
+            padding: 10px 20px;
+            color: white;
+            border: 2px solid #88ce02;
+            backdrop-filter: blur(5px);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-box span {
+            color: #88ce02;
+            font-weight: bold;
+            font-size: 20px;
+            margin-left: 5px;
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div class="game-wrapper">
+        <div class="stats-container">
+            <div class="stat-box">
+                🏹 Score: <span id="scoreDisplay">0</span>
+            </div>
+            <div class="stat-box">
+                🎯 Accuracy: <span id="accuracyDisplay">0%</span>
+            </div>
+        </div>
+        <div class="arrow-counter" id="arrowCounter">
+            📍 Stuck: 0/3
+        </div>
+        
+        <button class="replay-btn" id="replayBtn">
+            <svg viewBox="0 0 24 24">
+                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+            </svg>
+            REPLAY
+        </button>
+        
+        <canvas id="gameCanvas" width="1000" height="400"></canvas>
+        <div class="instruction">
+            <span>⬇️ Click and drag to pull back • Release to shoot ⬇️</span>
+        </div>
+    </div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+    <script>
+        // Get canvas and context
+        // Make canvas fill the screen
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const arrowCounter = document.getElementById('arrowCounter');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const accuracyDisplay = document.getElementById('accuracyDisplay');
+        const replayBtn = document.getElementById('replayBtn');
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        // Game state
+        let isDragging = false;
+        let pullDistance = 0;
+        let arrowAngle = 0;
+        let arrows = [];
+        let stuckArrows = [];
+        let maxStuckArrows = 3;
+        let score = 0;
+        let totalShots = 0;
+        let hits = 0;
+        let message = '';
+        let messageTimer = 0;
+        let mouseX = 0, mouseY = 0;
 
-        const AudioEngine = () => {
-            const [isPlaying, setIsPlaying] = useState(false);
-            const audioCtxRef = useRef(null);
-            const nodeRef = useRef(null);
+        // Slow motion flag
+        let showSlowMotion = false;
+        let slowMotionTimer = 0;
 
-            const toggleNoise = () => {
-                if (isPlaying) {
-                    audioCtxRef.current.close();
-                    setIsPlaying(false);
-                } else {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    const ctx = new AudioContext();
-                    audioCtxRef.current = ctx;
+        // Game objects positions
+        const bow = { x: 120, y: 200 };
+        const target = { x: 850, y: 200 };
 
-                    const bufferSize = 4096;
-                    const brownNoise = (function() {
-                        var lastOut = 0;
-                        var node = ctx.createScriptProcessor(bufferSize, 1, 1);
-                        node.onaudioprocess = function(e) {
-                            var output = e.outputBuffer.getChannelData(0);
-                            for (var i = 0; i < bufferSize; i++) {
-                                var white = Math.random() * 2 - 1;
-                                output[i] = (lastOut + (0.02 * white)) / 1.02;
-                                lastOut = output[i];
-                                output[i] *= 3.5;
-                            }
-                        }
-                        return node;
-                    })();
+        // Replay function
+        function resetGame() {
+            // Clear all arrays
+            arrows = [];
+            stuckArrows = [];
+            
+            // Reset counters
+            score = 0;
+            totalShots = 0;
+            hits = 0;
+            
+            // Reset UI
+            updateStats();
+            arrowCounter.textContent = `📍 Stuck: 0/${maxStuckArrows}`;
+            
+            // Reset slow motion
+            showSlowMotion = false;
+            slowMotionTimer = 0;
+            
+            // Show reset message
+            message = 'GAME RESET! ↩️';
+            messageTimer = 45;
+        }
 
-                    brownNoise.connect(ctx.destination);
-                    nodeRef.current = brownNoise;
-                    setIsPlaying(true);
+        // Update stats display
+        function updateStats() {
+            scoreDisplay.textContent = score;
+            const accuracy = totalShots > 0 ? Math.round((hits / totalShots) * 100) : 0;
+            accuracyDisplay.textContent = accuracy + '%';
+        }
+
+        // Replay button event listener
+        replayBtn.addEventListener('click', resetGame);
+
+        // Mouse event handling
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            updateMousePosition(e);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            updateMousePosition(e);
+            if (isDragging) {
+                calculatePull();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (isDragging && pullDistance > 5) {
+                shootArrow();
+            }
+            isDragging = false;
+            pullDistance = 0;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            pullDistance = 0;
+        });
+
+        function updateMousePosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseY = (e.clientY - rect.top) * scaleY;
+        }
+
+        function calculatePull() {
+            const dx = mouseX - bow.x;
+            const dy = mouseY - bow.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            pullDistance = Math.min(distance, 100);
+            arrowAngle = Math.atan2(dy, dx);
+        }
+
+        function shootArrow() {
+            totalShots++;
+            const randomError = (Math.random() - 0.5) * 0.08;
+            
+            // Create new arrow with slow motion flag
+            const newArrow = {
+                x: bow.x,
+                y: bow.y,
+                angle: arrowAngle + randomError,
+                power: pullDistance,
+                distance: 0,
+                active: true,
+                stuck: false,
+                slowMotion: showSlowMotion,
+                stuckIndex: -1
+            };
+            
+            arrows.push(newArrow);
+            
+            // If we just hit a target, show next arrow in slow motion
+            if (showSlowMotion) {
+                slowMotionTimer = 120;
+            }
+            
+            updateStats();
+        }
+
+        function updateArrows() {
+            for (let i = arrows.length - 1; i >= 0; i--) {
+                const arrow = arrows[i];
+                
+                if (!arrow.active || arrow.stuck) continue;
+                
+                // Apply slow motion if flag is active
+                let speedMultiplier = 1;
+                if (arrow.slowMotion) {
+                    speedMultiplier = 0.3;
                 }
-            };
-
-            return { isPlaying, toggleNoise };
-        };
-
-        const System22 = () => {
-            const [view, setView] = useState('dashboard');
-            const [streak, setStreak] = useState(0);
-            const [lastCheckIn, setLastCheckIn] = useState(null);
-            const [patterns, setPatterns] = useState([]);
-            const [timer, setTimer] = useState(0);
-            const [isTimerRunning, setIsTimerRunning] = useState(false);
-            const { isPlaying: isNoiseOn, toggleNoise } = AudioEngine();
-
-            useEffect(() => {
-                const savedStreak = localStorage.getItem('s22_streak');
-                const savedLastCheckIn = localStorage.getItem('s22_lastCheck');
-                const savedPatterns = localStorage.getItem('s22_patterns');
-
-                if (savedStreak) setStreak(parseInt(savedStreak));
-                if (savedLastCheckIn) setLastCheckIn(savedLastCheckIn);
-                if (savedPatterns) setPatterns(JSON.parse(savedPatterns));
-            }, []);
-
-            useEffect(() => {
-                localStorage.setItem('s22_patterns', JSON.stringify(patterns));
-            }, [patterns]);
-
-            useEffect(() => {
-                let interval = null;
-                if (isTimerRunning && timer > 0) {
-                    interval = setInterval(() => {
-                        setTimer(timer - 1);
-                    }, 1000);
-                } else if (timer === 0 && isTimerRunning) {
-                    setIsTimerRunning(false);
-                    const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-system-check-963.mp3');
-                    audio.play().catch(e => console.log("Audio play failed"));
+                
+                const speed = arrow.power * 0.8 * speedMultiplier;
+                arrow.distance += speed;
+                
+                const maxDistance = 800;
+                const t = arrow.distance / maxDistance;
+                
+                if (t > 1) {
+                    arrow.active = false;
+                    if (!arrow.stuck) {
+                        message = 'MISS!';
+                        messageTimer = 30;
+                    }
+                    updateStats();
+                    continue;
                 }
-                return () => clearInterval(interval);
-            }, [isTimerRunning, timer]);
-
-            const handleCheckIn = (success) => {
-                const today = new Date().toDateString();
-                if (lastCheckIn === today) return;
-
-                if (success) {
-                    const newStreak = streak + 1;
-                    setStreak(newStreak);
-                    localStorage.setItem('s22_streak', newStreak);
-                } else {
-                    setStreak(0);
-                    localStorage.setItem('s22_streak', 0);
-                }
-                setLastCheckIn(today);
-                localStorage.setItem('s22_lastCheck', today);
-            };
-
-            const addLog = (text, type) => {
-                const newPattern = {
-                    id: Date.now(),
-                    date: new Date().toLocaleString('ar-MA'),
-                    text: text,
-                    type: type
-                };
-                setPatterns([newPattern, ...patterns]);
-            };
-
-            const startTimer = (minutes) => {
-                setTimer(minutes * 60);
-                setIsTimerRunning(true);
-            };
-
-            const formatTime = (seconds) => {
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            };
-
-            const Dashboard = () => (
-                <div className="space-y-6 animate-fade-in">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="glass-panel p-4 rounded-sm border-l-4 border-cold-blue">
-                            <h3 className="text-xs text-gray-400 uppercase tracking-widest">Protocol 22 Status</h3>
-                            <div className="mt-2 flex items-baseline gap-2">
-                                <span className="text-4xl font-mono font-bold text-cold-blue glow-text">{streak}</span>
-                                <span className="text-sm text-gray-500">/ 22 DAYS</span>
-                            </div>
-                            <div className="w-full bg-system-gray h-1 mt-2">
-                                <div className="bg-cold-blue h-1 transition-all duration-500" style={{ width: `${Math.min((streak / 22) * 100, 100)}%` }}></div>
-                            </div>
-                        </div>
-                        <div className="glass-panel p-4 rounded-sm border-r-4 border-white">
-                             <h3 className="text-xs text-gray-400 uppercase tracking-widest">Identity Level</h3>
-                             <div className="mt-2 text-xl font-bold">
-                                {streak < 7 ? "PROJECT: ZOMBIE" : streak < 21 ? "PROJECT: AWAKENING" : "ELITE: SOVEREIGN"}
-                             </div>
-                             <p className="text-xs text-gray-500 mt-1">
-                                {streak < 7 ? "المراقب يحاول السيطرة..." : "السيستم يعمل بكفاءة."}
-                             </p>
-                        </div>
-                    </div>
-
-                    <div className="glass-panel p-6 rounded-sm">
-                        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-cold-blue rounded-full animate-pulse"></span>
-                            تقرير الصباح (Morning Report)
-                        </h2>
-                        {lastCheckIn === new Date().toDateString() ? (
-                            <div className="text-center py-4 text-green-500 border border-green-900/30 bg-green-900/10 rounded">
-                                تم تسجيل البيانات لهذا اليوم. انتظر الغد.
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <p className="text-sm text-gray-400">هل استيقظت قبل 05:05؟ هل الهاتف بقي خارج الغرفة؟</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button 
-                                        onClick={() => handleCheckIn(true)}
-                                        className="py-3 border border-cold-blue text-cold-blue hover:bg-cold-blue hover:text-black transition-colors font-bold"
-                                    >
-                                        نعم (تأكيد السيطرة)
-                                    </button>
-                                    <button 
-                                        onClick={() => {
-                                            handleCheckIn(false);
-                                            addLog("فشل بروتوكول الصباح. تم تصفير العداد.", "failure");
-                                        }}
-                                        className="py-3 border border-danger-red text-danger-red hover:bg-danger-red hover:text-white transition-colors font-bold"
-                                    >
-                                        لا (إعادة ضبط)
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-
-            const DeepWork = () => (
-                <div className="flex flex-col items-center justify-center h-full space-y-8 animate-fade-in">
-                    <div className="text-center space-y-2">
-                        <h2 className="text-2xl font-bold tracking-widest text-cold-blue glow-text">DEEP WORK CHAMBER</h2>
-                        <p className="text-xs text-gray-500">العزلة هي بوابة العظمة</p>
-                    </div>
-
-                    <div className="text-8xl font-mono font-bold tracking-tighter text-white tabular-nums">
-                        {formatTime(timer)}
-                    </div>
-
-                    {!isTimerRunning ? (
-                        <div className="flex gap-4">
-                            <button onClick={() => startTimer(25)} className="px-6 py-2 border border-gray-600 hover:border-white transition-all">25m</button>
-                            <button onClick={() => startTimer(50)} className="px-6 py-2 border border-gray-600 hover:border-white transition-all">50m</button>
-                            <button onClick={() => startTimer(90)} className="px-6 py-2 border border-gray-600 hover:border-white transition-all">90m</button>
-                        </div>
-                    ) : (
-                        <div className="text-center animate-pulse-slow text-danger-red">
-                            <p>لا يوجد زر إيقاف.</p>
-                            <p className="text-xs mt-2">إما أن تنهي الوقت، أو تغلق الصفحة وتعلن الهزيمة.</p>
-                        </div>
-                    )}
-
-                    <button 
-                        onClick={toggleNoise}
-                        className={`mt-8 px-8 py-4 border rounded-sm transition-all flex items-center gap-3 ${isNoiseOn ? 'bg-cold-blue text-black border-cold-blue' : 'border-gray-600 text-gray-400 hover:text-white'}`}
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                        {isNoiseOn ? "BROWN NOISE ACTIVE" : "ACTIVATE NOISE SHIELD"}
-                    </button>
-                </div>
-            );
-
-            const Logs = () => {
-                const [input, setInput] = useState("");
-
-                const handleSubmit = (e) => {
-                    e.preventDefault();
-                    if (!input.trim()) return;
-                    addLog(input, "intel");
-                    setInput("");
-                };
-
-                return (
-                    <div className="h-full flex flex-col space-y-4 animate-fade-in">
-                        <div className="glass-panel p-4 rounded-sm">
-                            <h2 className="text-lg font-bold mb-2">الصندوق الأسود (Pattern Recognition)</h2>
-                            <p className="text-xs text-gray-400 mb-4">سجل الملاحظات، الدوافع، ولحظات الضعف. حول الألم إلى بيانات.</p>
-                            <form onSubmit={handleSubmit} className="flex gap-2">
-                                <input 
-                                    type="text" 
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    placeholder="اكتب الملاحظة هنا..."
-                                    className="flex-1 bg-black/50 border border-gray-700 p-2 text-sm focus:border-cold-blue outline-none text-white"
-                                />
-                                <button type="submit" className="bg-white/10 px-4 py-2 hover:bg-cold-blue hover:text-black transition-colors">تسجيل</button>
-                            </form>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-                            {patterns.length === 0 && <p className="text-center text-gray-600 mt-10">لا توجد بيانات (No Data).</p>}
-                            {patterns.map(p => (
-                                <div key={p.id} className={`p-3 border-l-2 text-sm font-mono ${p.type === 'failure' ? 'border-danger-red bg-red-900/10' : 'border-cold-blue bg-blue-900/5'}`}>
-                                    <div className="text-xs text-gray-500 mb-1">{p.date}</div>
-                                    <div className="text-gray-300">{p.text}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                
+                arrow.x = bow.x + 750 * t;
+                arrow.y = bow.y - 120 * Math.sin(t * Math.PI) + t * 30;
+                
+                arrow.angle = Math.atan2(
+                    -120 * Math.PI * Math.cos(t * Math.PI) / maxDistance + 30 / maxDistance,
+                    750 / maxDistance
                 );
-            };
-
-            const Protocol = () => (
-                <div className="glass-panel p-6 rounded-sm h-full overflow-y-auto animate-fade-in text-justify">
-                    <h2 className="text-2xl font-bold text-cold-blue mb-6 border-b border-gray-800 pb-2">THE ELITE MANIFESTO</h2>
-                    <div className="space-y-6 text-sm leading-relaxed text-gray-300 font-mono">
-                        <p><strong className="text-white">1. السيادة المطلقة:</strong> أنا لست جسدي. أنا المراقب. الجسد آلة بيولوجية تحتاج للترويض، وليس للتفاوض.</p>
-                        <p><strong className="text-white">2. التنفيذ البارد:</strong> الشعور لا يهم. الرغبة لا تهم. الفعل هو الحقيقة الوحيدة. افعل ما يجب فعله بغض النظر عن الطقس الداخلي.</p>
-                        <p><strong className="text-white">3. الموت أو التطور:</strong> العودة لمنطقة الراحة ليست خياراً، بل انتحاراً. السفن أُحرقت.</p>
-                        <p><strong className="text-white">4. قانون الصمت:</strong> الحديث يضيع الطاقة. الصمت يبني الضغط. استخدم الضغط كوقود.</p>
-                        <p><strong className="text-white">5. 05:00 صباحاً:</strong> هذا هو الوقت الذي يُقسم فيه العالم إلى أسياد وعبيد. كن مستيقظاً حين ينامون.</p>
-                        <div className="mt-8 pt-4 border-t border-gray-800 text-center text-xs text-gray-500">
-                            SYSTEM V1.0 // DESIGNED FOR THE GRAND LAB RAT
-                        </div>
-                    </div>
-                </div>
-            );
-
-            return (
-                <div className="min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden">
-                    <div className="crt-line"></div>
+                
+                // Check hit
+                const tipX = arrow.x + Math.cos(arrow.angle) * 40;
+                const tipY = arrow.y + Math.sin(arrow.angle) * 40;
+                
+                const dx = tipX - target.x;
+                const dy = tipY - target.y;
+                const distToTarget = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check if arrow hit the target
+                if (distToTarget < 45 && arrow.active && !arrow.stuck) {
+                    // Check if we have room for more stuck arrows
+                    if (stuckArrows.length < maxStuckArrows) {
+                        // Mark arrow as stuck
+                        arrow.active = false;
+                        arrow.stuck = true;
+                        hits++;
+                        
+                        // Calculate stuck position on target
+                        const angleToTarget = Math.atan2(dy, dx);
+                        const stickDistance = distToTarget;
+                        
+                        // Store stuck arrow with its position
+                        stuckArrows.push({
+                            x: tipX,
+                            y: tipY,
+                            angle: arrow.angle,
+                            power: arrow.power,
+                            hitTime: Date.now()
+                        });
+                        
+                        // Update counter
+                        arrowCounter.textContent = `📍 Stuck: ${stuckArrows.length}/${maxStuckArrows}`;
+                        
+                        // Show message based on accuracy
+                        if (distToTarget < 15) {
+                            score += 50;
+                            message = 'PERFECT! 🎯';
+                        } else if (distToTarget < 30) {
+                            score += 30;
+                            message = 'GREAT! 👍';
+                        } else {
+                            score += 10;
+                            message = 'HIT! ✓';
+                        }
+                        messageTimer = 45;
+                        
+                        // Enable slow motion for next arrow
+                        showSlowMotion = true;
+                        
+                        // If we've reached max stuck arrows, show completion message
+                        if (stuckArrows.length === maxStuckArrows) {
+                            message = 'MAX ARROWS! 🏆';
+                            messageTimer = 60;
+                            showSlowMotion = false;
+                        }
+                    } else {
+                        // Target is full - arrow bounces off
+                        arrow.active = false;
+                        message = 'TARGET FULL!';
+                        messageTimer = 30;
+                    }
                     
-                    <header className="p-4 flex justify-between items-center border-b border-gray-800 bg-black/50 backdrop-blur-md z-10 sticky top-0">
-                        <h1 className="text-cold-blue font-bold tracking-wider text-sm">SYSTEM <span className="text-white">22</span></h1>
-                        <div className="flex gap-2 text-xs font-mono">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            ONLINE
-                        </div>
-                    </header>
+                    updateStats();
+                }
+            }
+            
+            // Remove arrows that are not active and not stuck
+            arrows = arrows.filter(a => a.active || a.stuck);
+            
+            // Update slow motion timer
+            if (slowMotionTimer > 0) {
+                slowMotionTimer--;
+                if (slowMotionTimer === 0) {
+                    showSlowMotion = false;
+                }
+            }
+        }
 
-                    <main className="flex-1 p-4 overflow-hidden relative z-0">
-                        {view === 'dashboard' && <Dashboard />}
-                        {view === 'deepwork' && <DeepWork />}
-                        {view === 'logs' && <Logs />}
-                        {view === 'protocol' && <Protocol />}
-                    </main>
+        // Drawing functions
+        function drawGround() {
+            ctx.fillStyle = '#2e7d32';
+            ctx.fillRect(0, 250, canvas.width, 150);
+            
+            ctx.strokeStyle = '#1b5e20';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 50; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 30, 250);
+                ctx.lineTo(i * 30 + 20, 280);
+                ctx.stroke();
+            }
+        }
 
-                    <nav className="border-t border-gray-800 bg-black p-2 z-10">
-                        <div className="grid grid-cols-4 gap-1">
-                            <button 
-                                onClick={() => setView('dashboard')}
-                                className={`p-3 text-xs font-bold uppercase tracking-wide transition-all ${view === 'dashboard' ? 'bg-cold-blue text-black' : 'hover:bg-gray-900 text-gray-500'}`}
-                            >
-                                Status
-                            </button>
-                            <button 
-                                onClick={() => setView('deepwork')}
-                                className={`p-3 text-xs font-bold uppercase tracking-wide transition-all ${view === 'deepwork' ? 'bg-cold-blue text-black' : 'hover:bg-gray-900 text-gray-500'}`}
-                            >
-                                Focus
-                            </button>
-                            <button 
-                                onClick={() => setView('logs')}
-                                className={`p-3 text-xs font-bold uppercase tracking-wide transition-all ${view === 'logs' ? 'bg-cold-blue text-black' : 'hover:bg-gray-900 text-gray-500'}`}
-                            >
-                                Data
-                            </button>
-                            <button 
-                                onClick={() => setView('protocol')}
-                                className={`p-3 text-xs font-bold uppercase tracking-wide transition-all ${view === 'protocol' ? 'bg-cold-blue text-black' : 'hover:bg-gray-900 text-gray-500'}`}
-                            >
-                                Rules
-                            </button>
-                        </div>
-                    </nav>
-                </div>
-            );
-        };
+        function drawSky() {
+            // Sun
+            ctx.beginPath();
+            ctx.arc(900, 70, 40, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffd700';
+            ctx.fill();
+            
+            // Sun rays
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const x1 = 900 + Math.cos(angle) * 50;
+                const y1 = 70 + Math.sin(angle) * 50;
+                const x2 = 900 + Math.cos(angle) * 70;
+                const y2 = 70 + Math.sin(angle) * 70;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            
+            // Clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.beginPath();
+            ctx.arc(200, 50, 25, 0, Math.PI * 2);
+            ctx.arc(230, 50, 30, 0, Math.PI * 2);
+            ctx.arc(260, 50, 25, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<System22 />);
+        function drawTarget() {
+            // Draw target stand
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(target.x - 15, target.y + 30, 30, 60);
+            
+            // Draw target rings
+            const rings = [
+                { radius: 45, color: '#FFFFFF' },
+                { radius: 35, color: '#F4531C' },
+                { radius: 25, color: '#FFFFFF' },
+                { radius: 15, color: '#F4531C' },
+                { radius: 7, color: '#FFD700' }
+            ];
+            
+            for (let ring of rings) {
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, ring.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ring.color;
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+            
+            // Draw hit marks where arrows are stuck
+            for (let arrow of stuckArrows) {
+                ctx.beginPath();
+                ctx.arc(arrow.x, arrow.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#8b0000';
+                ctx.fill();
+                ctx.strokeStyle = '#ff4444';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        function drawBow() {
+            // Draw bow body
+            ctx.beginPath();
+            ctx.moveTo(bow.x, bow.y - 40);
+            ctx.quadraticCurveTo(bow.x - 40, bow.y, bow.x, bow.y + 40);
+            ctx.strokeStyle = '#88ce02';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+            
+            // Draw bow string
+            ctx.beginPath();
+            ctx.moveTo(bow.x, bow.y - 40);
+            
+            if (isDragging && pullDistance > 0) {
+                const pullX = bow.x - pullDistance * 0.6;
+                const pullY = bow.y;
+                ctx.quadraticCurveTo(pullX, pullY, bow.x, bow.y + 40);
+                
+                // Draw nocked arrow
+                ctx.save();
+                ctx.translate(pullX, pullY);
+                ctx.rotate(arrowAngle);
+                
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(50, 0);
+                ctx.strokeStyle = '#888';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(50, 0);
+                ctx.lineTo(42, -4);
+                ctx.lineTo(42, 4);
+                ctx.closePath();
+                ctx.fillStyle = '#888';
+                ctx.fill();
+                
+                ctx.fillStyle = '#88ce02';
+                ctx.beginPath();
+                ctx.moveTo(10, 0);
+                ctx.lineTo(0, -5);
+                ctx.lineTo(0, 5);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+                
+                // Draw power indicator
+                const powerPercent = (pullDistance / 100) * 100;
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(20, 350, 200, 20);
+                
+                const gradient = ctx.createLinearGradient(20, 0, 220, 0);
+                gradient.addColorStop(0, '#88ce02');
+                gradient.addColorStop(1, '#ffcc00');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(20, 350, powerPercent * 2, 20);
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(20, 350, 200, 20);
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText(`POWER: ${Math.round(powerPercent)}%`, 20, 345);
+            } else {
+                ctx.quadraticCurveTo(bow.x - 15, bow.y, bow.x, bow.y + 40);
+            }
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function drawArrows() {
+            // Draw stuck arrows first
+            for (let arrow of stuckArrows) {
+                ctx.save();
+                ctx.translate(arrow.x, arrow.y);
+                ctx.rotate(arrow.angle);
+                
+                // Draw arrow shaft with slight transparency for stuck arrows
+                ctx.beginPath();
+                ctx.moveTo(-10, 0);
+                ctx.lineTo(30, 0);
+                ctx.strokeStyle = 'rgba(136, 136, 136, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw fletching
+                ctx.fillStyle = 'rgba(136, 206, 2, 0.8)';
+                ctx.beginPath();
+                ctx.moveTo(-2, 0);
+                ctx.lineTo(-12, -4);
+                ctx.lineTo(-12, 4);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            // Draw active arrows
+            for (let arrow of arrows) {
+                if (!arrow.active) continue;
+                
+                ctx.save();
+                ctx.translate(arrow.x, arrow.y);
+                ctx.rotate(arrow.angle);
+                
+                // Draw arrow shaft
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(40, 0);
+                ctx.strokeStyle = '#888';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw arrow head
+                ctx.beginPath();
+                ctx.moveTo(40, 0);
+                ctx.lineTo(34, -3);
+                ctx.lineTo(34, 3);
+                ctx.closePath();
+                ctx.fillStyle = '#888';
+                ctx.fill();
+                
+                // Draw fletching
+                ctx.fillStyle = '#88ce02';
+                ctx.beginPath();
+                ctx.moveTo(8, 0);
+                ctx.lineTo(0, -4);
+                ctx.lineTo(0, 4);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        function drawUI() {
+            // Slow motion indicator
+            if (showSlowMotion) {
+                ctx.fillStyle = '#88ce02';
+                ctx.font = 'bold 20px Arial';
+                ctx.shadowColor = '#88ce02';
+                ctx.shadowBlur = 10;
+                ctx.fillText('🐢 SLOW MOTION - Next arrow', 20, 150);
+            }
+            
+            // Message
+            if (messageTimer > 0) {
+                messageTimer--;
+                
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 15;
+                
+                if (message.includes('PERFECT')) {
+                    ctx.shadowColor = '#FFD700';
+                    ctx.fillStyle = '#FFD700';
+                } else if (message.includes('GREAT')) {
+                    ctx.shadowColor = '#F4531C';
+                    ctx.fillStyle = '#F4531C';
+                } else if (message.includes('HIT')) {
+                    ctx.shadowColor = '#88ce02';
+                    ctx.fillStyle = '#88ce02';
+                } else if (message.includes('MAX')) {
+                    ctx.shadowColor = '#FFD700';
+                    ctx.fillStyle = '#FFD700';
+                } else if (message.includes('RESET')) {
+                    ctx.shadowColor = '#88ce02';
+                    ctx.fillStyle = '#88ce02';
+                } else {
+                    ctx.shadowColor = '#aaa';
+                    ctx.fillStyle = '#aaa';
+                }
+                
+                ctx.fillText(message, canvas.width / 2, 120);
+            }
+            
+            ctx.shadowBlur = 0;
+            ctx.textAlign = 'left';
+        }
+
+        function drawTrajectory() {
+            if (!isDragging || pullDistance < 5) return;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.setLineDash([5, 5]);
+            
+            for (let t = 0.1; t <= 1; t += 0.1) {
+                const x = bow.x + 750 * t;
+                const y = bow.y - 120 * Math.sin(t * Math.PI) + t * 30;
+                
+                if (t === 0.1) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fill();
+            }
+            
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Keyboard reset (R key)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                resetGame();
+            }
+        });
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawSky();
+            drawGround();
+            drawTarget();
+            drawBow();
+            drawTrajectory();
+            updateArrows();
+            drawArrows();
+            drawUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        gameLoop();
     </script>
 </body>
 </html>
